@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# bin/detect <build-dir>
+
+# This script detects if the buildpack should be used for the application
+# It looks for Java application indicators
+
+BUILD_DIR=$1
+
+# Check for various Java application indicators
+if [ -f "$BUILD_DIR/pom.xml" ] || \
+   [ -f "$BUILD_DIR/build.gradle" ] || \
+   [ -f "$BUILD_DIR/build.gradle.kts" ] || \
+   [ -f "$BUILD_DIR/settings.gradle" ] || \
+   [ -f "$BUILD_DIR/settings.gradle.kts" ] || \
+   [ -n "$(find $BUILD_DIR -name "*.jar" -type f 2>/dev/null | head -1)" ] || \
+   [ -f "$BUILD_DIR/system.properties" ]; then
+    echo "Java (Eclipse Temurin JRE 21)"
+    exit 0
+else
+    exit 1
+fi

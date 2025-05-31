@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
+
+# Heroku Buildpack for Eclipse Temurin JRE 21 with HotSpot JVM
+# This buildpack installs Eclipse Temurin JRE 21 and sets up the Java runtime environment
+
+set -euo pipefail
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+# Buildpack directories
+BP_DIR=$(cd $(dirname $0)/..; pwd)
+OPT_DIR=$BUILD_DIR/.heroku/java
+
+# JRE version and download information
+JRE_VERSION="21"
+JRE_FULL_VERSION="21.0.5+11"
+JRE_URL_VERSION="21.0.5_11"
+TEMURIN_BASE_URL="https://api.adoptium.net/v3/binary/version"
+
+# Architecture detection
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)
+        TEMURIN_ARCH="x64"
+        ;;
+    aarch64)
+        TEMURIN_ARCH="aarch64"
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH" >&2
+        exit 1
+        ;;
+esac
+
+# OS detection (Heroku uses Linux)
+OS="linux"
+
+indent() {
+    sed -u 's/^/       /'
+}
+
+echo "-----> Installing Eclipse Temurin JRE ${JRE_VERSION} with HotSpot JVM"
+
+# Create directories
+mkdir -p $OPT_DIR
+mkdir -p $CACHE_DIR
+
+# Construct download URL for Eclipse Temurin
+DOWNLOAD_URL="${TEMURIN_BASE_URL}/jdk${JRE_FULL_VERSION}/${OS}/${TEMURIN_ARCH}/jre/hotspot/normal/eclipse"
+
+# Cache key for the JRE
+CACHE_KEY="temurin-jre-${JRE_FULL_VERSION}-${OS}-${TEMURIN_ARCH}"
+CACHED_JRE="$CACHE_DIR/$CACHE_KEY.tar.gz"
+
+# Download JRE if not cached
+if [ ! -f "$CACHED_JRE" ]; then
+    echo "-----> Downloading Eclipse Temurin JRE ${JRE_FULL_VERSION} (${TEMURIN_ARCH})"
+    echo "       from: $DOWNLOAD_URL" | indent
+    
+    curl -L --fail --retry 3 --retry-delay 1 --connect-timeout 10 --max-time 300 \
+         -o "$CACHED_JRE" "$DOWNLOAD_URL" 2>&1 | indent
+    
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        echo "Failed to download JRE" >&2
+        exit 1
+    fi
+else
+    echo "-----> Using cached Eclipse Temurin JRE ${JRE_FULL_VERSION}"
+fi
+
+# Extract JRE
+echo "-----> Extracting JRE to ${OPT_DIR}"
+tar -xzf "$CACHED_JRE" -C "$OPT_DIR" --strip-components=1 2>&1 | indent
+
+# Verify installation
+if [ ! -f "$OPT_DIR/bin/java" ]; then
+    echo "Failed to extract JRE properly" >&2
+    exit 1
+fi
+
+# Set up profile.d script for runtime
+mkdir -p $BUILD_DIR/.profile.d
+cat > $BUILD_DIR/.profile.d/java.sh <<EOOF
+export JAVA_HOME=\$HOME/.heroku/java
+export PATH=\$JAVA_HOME/bin:\$PATH
+export JAVA_TOOL_OPTIONS="\${JAVA_TOOL_OPTIONS:-} -XX:+UseContainerSupport"
+EEOF
+
+# Export environment variables for subsequent buildpacks
+export JAVA_HOME=$OPT_DIR
+export PATH=$JAVA_HOME/bin:$PATH
+
+# Create a system.properties file if it doesn't exist
+if [ ! -f "$BUILD_DIR/system.properties" ]; then
+    echo "java.runtime.version=${JRE_VERSION}" > "$BUILD_DIR/system.properties"
+fi
+
+# Display JRE version
+echo "-----> JRE installation completed"
+$OPT_DIR/bin/java -version 2>&1 | indent
+
+# Set up default web process if Procfile doesn't exist
+if [ ! -f "$BUILD_DIR/Procfile" ] && [ -f "$BUILD_DIR/target/*.jar" ]; then
+    echo "-----> No Procfile found. Creating default web process"
+    JAR_FILE=$(find $BUILD_DIR/target -name "*.jar" -type f | head -1)
+    if [ -n "$JAR_FILE" ]; then
+        JAR_NAME=$(basename $JAR_FILE)
+        echo "web: java -jar target/$JAR_NAME" > $BUILD_DIR/Procfile
+    fi
+fi
+
+echo "-----> Eclipse Temurin JRE ${JRE_VERSION} with HotSpot JVM installation complete!"

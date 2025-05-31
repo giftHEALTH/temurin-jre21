@@ -1,0 +1,42 @@
+# Buildpack metadata for Eclipse Temurin JRE 21
+
+api = "0.10"
+
+[buildpack]
+id = "heroku/temurin-jre21"
+version = "1.0.0"
+name = "Eclipse Temurin JRE 21"
+homepage = "https://adoptium.net/"
+description = "Heroku buildpack for Eclipse Temurin JRE 21 with HotSpot JVM"
+keywords = ["java", "jre", "temurin", "eclipse", "adoptium", "hotspot"]
+
+[[buildpack.licenses]]
+type = "MIT"
+
+[metadata]
+include-files = ["bin/compile", "bin/detect", "bin/release", "README.md", "LICENSE"]
+
+[[metadata.dependencies]]
+id = "jre"
+name = "Eclipse Temurin JRE"
+version = "21.0.5+11"
+uri = "https://api.adoptium.net/v3/binary/version/jdk21.0.5+11/linux/x64/jre/hotspot/normal/eclipse"
+sha256 = ""
+stacks = ["heroku-20", "heroku-22", "heroku-24"]
+
+[[metadata.dependencies]]
+id = "jre"
+name = "Eclipse Temurin JRE"
+version = "21.0.5+11"
+uri = "https://api.adoptium.net/v3/binary/version/jdk21.0.5+11/linux/aarch64/jre/hotspot/normal/eclipse"
+sha256 = ""
+stacks = ["heroku-20", "heroku-22", "heroku-24"]
+
+[[stacks]]
+id = "heroku-20"
+
+[[stacks]]
+id = "heroku-22"
+
+[[stacks]]
+id = "heroku-24"

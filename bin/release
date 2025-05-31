@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# bin/release <build-dir>
+
+# This script generates the release configuration for the app
+
+BUILD_DIR=$1
+
+# Generate default_process_types if no Procfile exists
+if [ ! -f "$BUILD_DIR/Procfile" ]; then
+    # Look for executable JAR files
+    JAR_FILE=$(find $BUILD_DIR -name "*.jar" -type f 2>/dev/null | grep -E "(target|build)" | head -1)
+    
+    if [ -n "$JAR_FILE" ]; then
+        # Make path relative to app root
+        JAR_PATH=$(echo $JAR_FILE | sed "s|$BUILD_DIR/||")
+        cat <<EEOF
+---
+default_process_types:
+  web: java -jar $JAR_PATH
+EEOF
+    else
+        cat <<EEOF
+---
+default_process_types:
+  web: java -version
+EEOF
+    fi
+else
+    # No default process types needed if Procfile exists
+    echo "---"
+fi
