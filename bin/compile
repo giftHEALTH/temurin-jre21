@@ -85,11 +85,11 @@ fi
 
 # Set up profile.d script for runtime
 mkdir -p $BUILD_DIR/.profile.d
-cat > $BUILD_DIR/.profile.d/java.sh <<EOOF
-export JAVA_HOME=\$HOME/.heroku/java
-export PATH=\$JAVA_HOME/bin:\$PATH
-export JAVA_TOOL_OPTIONS="\${JAVA_TOOL_OPTIONS:-} -XX:+UseContainerSupport"
-EEOF
+cat > $BUILD_DIR/.profile.d/java.sh <<'JAVA_PROFILE_EOF'
+export JAVA_HOME=$HOME/.heroku/java
+export PATH=$JAVA_HOME/bin:$PATH
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -XX:+UseContainerSupport"
+JAVA_PROFILE_EOF
 
 # Export environment variables for subsequent buildpacks
 export JAVA_HOME=$OPT_DIR
@@ -105,12 +105,15 @@ echo "-----> JRE installation completed"
 $OPT_DIR/bin/java -version 2>&1 | indent
 
 # Set up default web process if Procfile doesn't exist
-if [ ! -f "$BUILD_DIR/Procfile" ] && [ -f "$BUILD_DIR/target/*.jar" ]; then
-    echo "-----> No Procfile found. Creating default web process"
-    JAR_FILE=$(find $BUILD_DIR/target -name "*.jar" -type f | head -1)
+if [ ! -f "$BUILD_DIR/Procfile" ]; then
+    # Look for JAR files in target or build directories
+    JAR_FILE=$(find $BUILD_DIR -path "*/target/*.jar" -o -path "*/build/libs/*.jar" 2>/dev/null | head -1)
+    
     if [ -n "$JAR_FILE" ]; then
-        JAR_NAME=$(basename $JAR_FILE)
-        echo "web: java -jar target/$JAR_NAME" > $BUILD_DIR/Procfile
+        JAR_NAME=$(basename "$JAR_FILE")
+        JAR_DIR=$(dirname "$JAR_FILE" | sed "s|$BUILD_DIR/||")
+        echo "-----> No Procfile found. Creating default web process"
+        echo "web: java -jar $JAR_DIR/$JAR_NAME" > $BUILD_DIR/Procfile
     fi
 fi
 

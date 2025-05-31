@@ -20,7 +20,7 @@ include-files = ["bin/compile", "bin/detect", "bin/release", "README.md", "LICEN
 id = "jre"
 name = "Eclipse Temurin JRE"
 version = "21.0.5+11"
-uri = "https://api.adoptium.net/v3/binary/version/jdk21.0.5+11/linux/x64/jre/hotspot/normal/eclipse"
+uri = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jre_x64_linux_hotspot_21.0.5_11.tar.gz"
 sha256 = ""
 stacks = ["heroku-20", "heroku-22", "heroku-24"]
 
@@ -28,7 +28,7 @@ stacks = ["heroku-20", "heroku-22", "heroku-24"]
 id = "jre"
 name = "Eclipse Temurin JRE"
 version = "21.0.5+11"
-uri = "https://api.adoptium.net/v3/binary/version/jdk21.0.5+11/linux/aarch64/jre/hotspot/normal/eclipse"
+uri = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jre_aarch64_linux_hotspot_21.0.5_11.tar.gz"
 sha256 = ""
 stacks = ["heroku-20", "heroku-22", "heroku-24"]
 

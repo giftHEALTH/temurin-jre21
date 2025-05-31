@@ -13,17 +13,17 @@ if [ ! -f "$BUILD_DIR/Procfile" ]; then
     if [ -n "$JAR_FILE" ]; then
         # Make path relative to app root
         JAR_PATH=$(echo $JAR_FILE | sed "s|$BUILD_DIR/||")
-        cat <<RELEOF
+        cat <<RELEASE_YAML_EOF
 ---
 default_process_types:
   web: java -jar $JAR_PATH
-RELEOF
+RELEASE_YAML_EOF
     else
-        cat <<RELEOF
+        cat <<RELEASE_YAML_EOF
 ---
 default_process_types:
   web: java -version
-RELEOF
+RELEASE_YAML_EOF
     fi
 else
     # No default process types needed if Procfile exists
