@@ -18,7 +18,6 @@ OPT_DIR=$BUILD_DIR/.heroku/java
 JRE_VERSION="21"
 JRE_FULL_VERSION="21.0.5+11"
 JRE_URL_VERSION="21.0.5_11"
-TEMURIN_BASE_URL="https://api.adoptium.net/v3/binary/version"
 
 # Architecture detection
 ARCH=$(uname -m)
@@ -49,7 +48,10 @@ mkdir -p $OPT_DIR
 mkdir -p $CACHE_DIR
 
 # Construct download URL for Eclipse Temurin
-DOWNLOAD_URL="${TEMURIN_BASE_URL}/jdk${JRE_FULL_VERSION}/${OS}/${TEMURIN_ARCH}/jre/hotspot/normal/eclipse"
+# The correct URL format is: https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jre_x64_linux_hotspot_21.0.5_11.tar.gz
+GITHUB_BASE_URL="https://github.com/adoptium/temurin21-binaries/releases/download"
+URL_VERSION=$(echo $JRE_FULL_VERSION | sed 's/+/%2B/g')
+DOWNLOAD_URL="${GITHUB_BASE_URL}/jdk-${URL_VERSION}/OpenJDK21U-jre_${TEMURIN_ARCH}_${OS}_hotspot_${JRE_URL_VERSION}.tar.gz"
 
 # Cache key for the JRE
 CACHE_KEY="temurin-jre-${JRE_FULL_VERSION}-${OS}-${TEMURIN_ARCH}"
